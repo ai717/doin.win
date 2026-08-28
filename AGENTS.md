@@ -12,9 +12,10 @@ doin.win 是小游戏合集站点的首页（门户），以卡片形式链接�
 ```
 ├── index.html      # 首页
 ├── css/style.css   # 全部样式（像素风主题，CSS 变量定义在 :root）
-├── js/main.js      # 读取 games.json 渲染卡片
-├── games.json      # 游戏清单
-├── assets/         # 封面图/图标
+├── js/main.js      # 读 games.json 渲染卡片 + 注入 JSON-LD
+├── games.json      # 游戏清单（唯一数据源）
+├── assets/         # favicon.svg / og-image.png / 封面图
+├── robots.txt / sitemap.xml / CNAME
 └── <游戏目录>/      # 各游戏独立目录
 ```
 
@@ -35,3 +36,10 @@ doin.win 是小游戏合集站点的首页（门户），以卡片形式链接�
 ## SEO 规则
 - sitemap 只收录同域名 URL：子目录式游戏上线后追加到主站 `sitemap.xml`；子域名游戏由各自站点维护自己的 sitemap/robots
 - 新增游戏卡片时，同步确认目标站点可被收录（标题/描述准确）
+
+## 部署与仓库
+- 仓库：github.com/ai717/doin.win（main 分支 = GitHub Pages 源，根目录）
+- 域名：doin.win 由 Cloudflare 管理 DNS；CNAME 文件绑定域名
+- 认证：gh CLI 账号为 ai717（与 Windows 缓存的 ai919 不同，推送靠 `gh auth setup-git`）
+- 已知问题：Cloudflare 橙云代理导致 GitHub 证书无法签发（526），需灰云直连
+- 子域名游戏（如 sudoku.doin.win）独立部署，不属本仓库

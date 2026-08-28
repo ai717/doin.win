@@ -1,35 +1,27 @@
 # PROJECT_LOG.md — 开发进度日志
 
-## 2026-08-29 · sitemap 规则与卡片文案优化
-- 确认子域名游戏不纳入主站 sitemap（规范要求）；数独站已有完备的多语言 sitemap/robots
-- 数独卡片描述升级：补充每日挑战、多语言特性（依据其 sitemap 实际内容）
-- AGENTS.md 新增 SEO 规则（sitemap 收录范围、新游戏接入检查项）
+## 2026-08-29 · 本会话：从零到 GitHub Pages 上线
 
-## 2026-08-29 · 发布到 GitHub
-- 仓库：https://github.com/ai717/doin.win（公开，main 分支）
-- 新增 `.gitignore`（含临时截图排除规则）
+### 完成内容
+1. **首页 MVP**：复古像素风门户（深底霓虹色、硬边卡片、CRT 扫描线、Press Start 2P），`games.json` 数据驱动卡片网格，响应式 + 键盘焦点 + 减弱动效
+2. **游戏卡片接入**：数独（`https://sudoku.doin.win`，可点击）、拧螺丝（`/ningluosi/`，coming soon）
+3. **SEO**：关键词化 title/description、canonical、Open Graph、Twitter Card（大图）、JSON-LD（动态注入）、robots.txt、sitemap.xml、og-image.png（1200×630）
+4. **品牌图标**：assets/favicon.svg（像素 D + 粉色硬阴影 + 琥珀点）
+5. **发布**：GitHub 仓库 `ai717/doin.win`（main）+ Pages 启用 + CNAME 绑定 doin.win
 
-## 2026-08-29 · 站点图标
-- 新增 `assets/favicon.svg`：像素风品牌图标（深底 + 白色像素 D + 粉色硬阴影 + 琥珀圆点），替换 emoji 占位 favicon
+### 修改文件
+`index.html` `css/style.css` `js/main.js` `games.json` `robots.txt` `sitemap.xml` `CNAME` `.gitignore` `assets/favicon.svg` `assets/og-image.png` `AGENTS.md` `README.md` `PROJECT_LOG.md`
 
-## 2026-08-29 · SEO 优化
-- `index.html`：关键词化 title/description、canonical、Open Graph、Twitter Card、theme-color
-- 新增 `robots.txt` + `sitemap.xml`（sitemap 仅含首页；sudoku 属独立子域名，不纳入）
-- `js/main.js`：从 games.json 动态注入 JSON-LD（ItemList + VideoGame）
-- 新增 `assets/og-image.png`（1200×630 像素风分享图），接入 og:image / twitter:image（大图模式）
+### 关键实现
+- 纯静态零依赖；游戏增删只改 `games.json`（含 JSON-LD 同步）
+- sitemap 只收录同域名：子目录游戏追加主站 sitemap，子域名游戏各自维护
 
-## 2026-08-29 · 接入数独游戏卡片
-- `games.json` 新增数独条目，链接子域名 `https://sudoku.doin.win`（emoji 占位，无 comingSoon，可点击）
-- 验证了子域名绝对链接的卡片流程，无代码改动，仅改 JSON 即生效
+### 遇到的问题
+- 误提交临时截图 → `git rm --cached` 移除，`.gitignore` 加 `qa-*.png`
+- push 403（Windows 缓存 ai919 凭据 vs 仓库属 ai717）→ `gh auth setup-git` 走 gh 认证解决
+- **https://doin.win 返回 526（未解决）**：Cloudflare 橙云代理挡住 GitHub 域名验证，证书无法签发
 
-## 2026-08-29 · 首页 MVP
-- 搭建纯静态首页脚手架：`index.html` / `css/style.css` / `js/main.js`
-- 复古像素风主题：深色底 + 霓虹色 + 硬边卡片 + CRT 扫描线 + Press Start 2P 字体
-- 卡片网格由 `games.json` 数据驱动，支持封面图/emoji 占位、标签、"即将上线"徽标
-- 响应式（手机 1 列 → 桌面多列）、键盘焦点态、减弱动效适配
-- 预置示例条目：拧螺丝（/ningluosi/，coming soon）
-- 建立项目文档：AGENTS.md / PROJECT_LOG.md / README.md
-
-## 待办
-- [ ] 接入第一款真实游戏（拧螺丝）：确定卡片封面规范
-- [ ] 部署方案与域名绑定
+### 待办
+- [ ] 解决 526：Cloudflare A 记录改灰云（DNS only）指向 GitHub 4 IP（185.199.108-111.153）→ 等证书签发 → 勾选 Enforce HTTPS
+- [ ] 向 Google Search Console 提交 doin.win 与 sudoku.doin.win 的 sitemap
+- [ ] 拧螺丝游戏本体开发；上线后追加主站 sitemap
