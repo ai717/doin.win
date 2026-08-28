@@ -1,0 +1,296 @@
+/* ============================================
+   DOIN.WIN — 复古像素风主题
+   ============================================ */
+
+:root {
+  /* 配色：近黑藏蓝底 + 霓虹点缀 */
+  --bg: #0b0b1a;
+  --bg-raise: #14142b;
+  --ink: #e8e6f0;
+  --ink-dim: #8b89a6;
+
+  --neon-cyan: #4de8e0;
+  --neon-pink: #ff5db1;
+  --neon-amber: #ffc94d;
+  --neon-violet: #9d7bff;
+
+  --pixel: 4px; /* 像素硬边基础单位 */
+
+  /* 字体 */
+  --font-pixel: "Press Start 2P", "PingFang SC", "Microsoft YaHei", monospace;
+  --font-body: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(157, 123, 255, 0.14), transparent),
+    radial-gradient(ellipse 60% 40% at 85% 110%, rgba(77, 232, 224, 0.08), transparent),
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ---------- CRT 扫描线（低透明度，克制） ---------- */
+.scanlines {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 3px,
+    rgba(0, 0, 0, 0.14) 3px,
+    rgba(0, 0, 0, 0.14) 4px
+  );
+  opacity: 0.5;
+}
+
+/* ---------- 页头 ---------- */
+.site-header {
+  text-align: center;
+  padding: clamp(48px, 9vw, 88px) 20px 8px;
+}
+
+.logo-text {
+  font-family: var(--font-pixel);
+  font-size: clamp(28px, 6vw, 52px);
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  text-shadow:
+    var(--pixel) var(--pixel) 0 var(--neon-pink),
+    calc(var(--pixel) * -1) calc(var(--pixel) * -1) 0 rgba(77, 232, 224, 0.35);
+}
+
+.logo-dot {
+  color: var(--neon-amber);
+}
+
+.tagline {
+  margin-top: 20px;
+  font-family: var(--font-pixel);
+  font-size: clamp(8px, 1.6vw, 11px);
+  line-height: 2;
+  color: var(--ink-dim);
+  letter-spacing: 0.12em;
+}
+
+.header-divider {
+  margin: 36px auto 0;
+  max-width: 640px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  color: var(--neon-cyan);
+  letter-spacing: 0.1em;
+}
+
+.header-divider::before,
+.header-divider::after {
+  content: "";
+  flex: 1;
+  height: var(--pixel);
+  background: repeating-linear-gradient(
+    to right,
+    rgba(77, 232, 224, 0.4) 0 var(--pixel),
+    transparent var(--pixel) calc(var(--pixel) * 2)
+  );
+}
+
+.blink {
+  animation: blink 1.2s steps(2, start) infinite;
+}
+
+@keyframes blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+/* ---------- 游戏卡片网格 ---------- */
+main {
+  flex: 1;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 28px;
+}
+
+.noscript-msg,
+.load-err {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--ink-dim);
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  line-height: 2;
+  padding: 40px 0;
+}
+
+/* ---------- 卡片 ---------- */
+.game-card {
+  position: relative;
+  display: block;
+  background: var(--bg-raise);
+  border: var(--pixel) solid var(--ink);
+  text-decoration: none;
+  color: inherit;
+  /* 像素硬阴影 */
+  box-shadow: calc(var(--pixel) * 2) calc(var(--pixel) * 2) 0 var(--card-accent, var(--neon-cyan));
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  image-rendering: pixelated;
+}
+
+.game-card:hover,
+.game-card:focus-visible {
+  transform: translate(calc(var(--pixel) * -1), calc(var(--pixel) * -1));
+  box-shadow: calc(var(--pixel) * 3) calc(var(--pixel) * 3) 0 var(--card-accent, var(--neon-cyan));
+}
+
+.game-card:active {
+  transform: translate(var(--pixel), var(--pixel));
+  box-shadow: var(--pixel) var(--pixel) 0 var(--card-accent, var(--neon-cyan));
+}
+
+.game-card:focus-visible {
+  outline: 3px dashed var(--neon-amber);
+  outline-offset: 5px;
+}
+
+/* 封面区 */
+.card-cover {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 9;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.03)),
+    repeating-conic-gradient(var(--bg) 0% 25%, var(--bg-raise) 0% 50%) 0 0 / 24px 24px;
+  border-bottom: var(--pixel) solid var(--ink);
+  overflow: hidden;
+}
+
+.card-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.card-icon {
+  font-size: 56px;
+  line-height: 1;
+  filter: drop-shadow(var(--pixel) var(--pixel) 0 rgba(0, 0, 0, 0.45));
+  transition: transform 0.12s ease;
+}
+
+.game-card:hover .card-icon {
+  transform: scale(1.12);
+}
+
+/* 即将上线徽标 */
+.badge-soon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  padding: 6px 8px;
+  color: var(--bg);
+  background: var(--neon-amber);
+  border: 2px solid var(--bg);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.08em;
+}
+
+/* 文字区 */
+.card-body {
+  padding: 18px 16px 20px;
+}
+
+.card-title {
+  font-family: var(--font-pixel);
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--card-accent, var(--neon-cyan));
+}
+
+.card-desc {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink-dim);
+}
+
+.card-tags {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  padding: 5px 8px;
+  color: var(--ink-dim);
+  border: 2px solid var(--ink-dim);
+  letter-spacing: 0.08em;
+}
+
+/* 即将上线卡片：整体降饱和、禁止点击 */
+.game-card.is-soon {
+  cursor: default;
+  filter: saturate(0.75);
+}
+
+.game-card.is-soon:hover,
+.game-card.is-soon:focus-visible {
+  transform: none;
+  box-shadow: calc(var(--pixel) * 2) calc(var(--pixel) * 2) 0 var(--card-accent, var(--neon-cyan));
+}
+
+/* ---------- 页脚 ---------- */
+.site-footer {
+  padding: 28px 20px 36px;
+  text-align: center;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: var(--ink-dim);
+}
+
+/* ---------- 减弱动效 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .blink {
+    animation: none;
+  }
+  .game-card,
+  .card-icon {
+    transition: none;
+  }
+}

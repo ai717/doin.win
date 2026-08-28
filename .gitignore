@@ -1,0 +1,15 @@
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 编辑器
+.vscode/
+.idea/
+
+# 日志
+*.log
+
+# 临时截图
+qa-*.png
+

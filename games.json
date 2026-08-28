@@ -1,0 +1,23 @@
+{
+  "games": [
+    {
+      "title": "数独",
+      "slug": "sudoku",
+      "desc": "经典 9×9 逻辑填数，从入门到骨灰级的烧脑修行。",
+      "icon": "🔢",
+      "cover": "",
+      "tags": ["益智", "经典"],
+      "url": "https://sudoku.doin.win"
+    },
+    {
+      "title": "拧螺丝",
+      "slug": "ningluosi",
+      "desc": "拆下螺丝、清空板件，考验空间思维的解压小游戏。",
+      "icon": "🔩",
+      "cover": "",
+      "tags": ["益智", "解压"],
+      "url": "/ningluosi/",
+      "comingSoon": true
+    }
+  ]
+}
