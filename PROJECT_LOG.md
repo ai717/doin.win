@@ -1,5 +1,9 @@
 # PROJECT_LOG.md — 开发进度日志
 
+## 2026-08-29 · 发布到 GitHub
+- 仓库：https://github.com/ai717/doin.win（公开，main 分支）
+- 新增 `.gitignore`（含临时截图排除规则）
+
 ## 2026-08-29 · 站点图标
 - 新增 `assets/favicon.svg`：像素风品牌图标（深底 + 白色像素 D + 粉色硬阴影 + 琥珀圆点），替换 emoji 占位 favicon
 
