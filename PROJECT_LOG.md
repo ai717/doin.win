@@ -1,5 +1,10 @@
 # PROJECT_LOG.md — 开发进度日志
 
+## 2026-08-29 · sitemap 规则与卡片文案优化
+- 确认子域名游戏不纳入主站 sitemap（规范要求）；数独站已有完备的多语言 sitemap/robots
+- 数独卡片描述升级：补充每日挑战、多语言特性（依据其 sitemap 实际内容）
+- AGENTS.md 新增 SEO 规则（sitemap 收录范围、新游戏接入检查项）
+
 ## 2026-08-29 · 发布到 GitHub
 - 仓库：https://github.com/ai717/doin.win（公开，main 分支）
 - 新增 `.gitignore`（含临时截图排除规则）
