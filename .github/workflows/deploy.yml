@@ -1,29 +1,32 @@
 name: Deploy doin.win
 
-# 全站部署（门户 + 所有子游戏）。
+# 全站部署（门户 + 所有子游戏），采用「main 分支即 Pages 源」的约定发布。
+# CI 负责：构建子游戏 → 把静态产物回提进 main 的 /<slug>/ 子目录 → 由 GitHub Pages(分支模式)直接伺服。
+#
 # 约定（未来加游戏只需满足即可，无需改此文件）：
-#   1. 子游戏源码放在 games/<slug>/，如 games/sudoku/、games/ningluosi/
+#   1. 子游戏源码放在 games/<slug>/，如 games/sudoku/
 #   2. 该目录含 package.json 且带 build 脚本，产物输出到 dist/
 #   3. 构建配置里设 base: "/<slug>/"，使资源自带子路径前缀
 #   4. 在 games.json 加一条 { "slug": "<slug>", "url": "/<slug>/" }
-# CI 会自动发现 games/ 下所有游戏并构建，注入发布站的 /<slug>/ 子路径。
 # sitemap.xml 由 games.json 自动生成（见 scripts/gen-sitemap.mjs），无需手工维护。
+#
+# 为何不切到 GitHub Actions 部署模式：本项目 Pages 绑定自定义域名(doin.win/Cloudflare)，
+# GitHub REST API 禁用了对该站点的 Pages 源修改(PATCH 返回 404)，故沿用分支发布模式，
+# 由 CI 把构建产物提交回 main 对应子目录。
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages
+  group: deploy
   cancel-in-progress: false
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -34,60 +37,48 @@ jobs:
         with:
           node-version: 22
 
-      # 0) 由 games.json（唯一数据源）生成 sitemap.xml，避免手工遗漏
-      - name: Generate sitemap from games.json
-        run: node scripts/gen-sitemap.mjs
-
-      # 1) 主站门户：纯静态，原样拷贝（sitemap.xml 已由上一步生成）
-      - name: Stage main site (static)
+      - name: Build sub-games and publish to main
         run: |
-          mkdir -p _site
-          cp index.html CNAME robots.txt sitemap.xml games.json _site/ 2>/dev/null || true
-          cp -r css js assets _site/ 2>/dev/null || true
+          set -euo pipefail
 
-      # 2) 自动发现并构建 games/ 下的子游戏，挂载到 /<slug>/
-      - name: Build & mount sub-games (auto-discover)
-        run: |
-          set -e
-          FAILED=""
+          # 0) sitemap 由 games.json（唯一数据源）生成
+          node scripts/gen-sitemap.mjs
+
+          PUBLISHED=()
           for path in games/*/; do
-            dir=$(basename "$path")
-            [ -f "games/$dir/package.json" ] || continue
-            if grep -q '"build"' "games/$dir/package.json"; then
-              echo "::group::Build game: $dir"
-              if ! (cd "games/$dir" && npm ci && npm run build); then
-                echo "::error::Game '$dir' build failed"
-                FAILED="$FAILED $dir"
-                echo "::endgroup::"
-                continue
+            dir="${path%/}"
+            slug="$(basename "$dir")"
+            [ -f "$dir/package.json" ] || continue
+            if node -e "process.exit(require('./$dir/package.json').scripts && require('./$dir/package.json').scripts.build ? 0 : 1)"; then
+              echo "::group::Build game: $slug"
+              ( cd "$dir" && npm ci && npm run build )
+              # SPA 回退：复制 index.html 为 404.html，避免直接访问/刷新子路由(如 /sudoku/play) 404
+              if [ -f "$dir/dist/index.html" ]; then
+                cp "$dir/dist/index.html" "$dir/dist/404.html"
               fi
-              # SPA 回退：直接访问/刷新子路由(如 /sudoku/play)时 GitHub Pages 会 404，
-              # 复制 index.html 为 404.html 让客户端路由接管。
-              if [ -f "games/$dir/dist/index.html" ]; then
-                cp "games/$dir/dist/index.html" "games/$dir/dist/404.html"
-              fi
-              mkdir -p "_site/$dir"
-              cp -r "games/$dir/dist/." "_site/$dir/"
+              # 将产物发布到仓库根的 /<slug>/，由分支模式 Pages 伺服
+              rm -rf "$slug"
+              mkdir -p "$slug"
+              cp -r "$dir/dist/." "$slug/"
+              PUBLISHED+=("$slug")
               echo "::endgroup::"
             fi
           done
-          if [ -n "$FAILED" ]; then
-            echo "Failed games:$FAILED"
-            exit 1
+          echo "Published slugs: ${PUBLISHED[*]:-none}"
+
+          # 1) 提交回 main。注意：此处不加 [skip ci]，
+          #    因为 legacy 模式下的 Pages 构建由「推送到 main」触发，
+          #    若跳过 CI 则 Pages 不会重新构建、子游戏仍不上线。
+          #    循环由「无变化则退出、不推送」自然终止。
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add sitemap.xml
+          for s in "${PUBLISHED[@]:-}"; do
+            [ -n "$s" ] && git add "$s"
+          done
+          if git diff --cached --quiet; then
+            echo "No changes to publish."
+            exit 0
           fi
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          git commit -m "chore: publish built sub-games"
+          git push origin HEAD:main
