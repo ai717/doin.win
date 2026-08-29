@@ -60,6 +60,13 @@ jobs:
               rm -rf "$slug"
               mkdir -p "$slug"
               cp -r "$dir/dist/." "$slug/"
+              # 站点级 SPA 回退：GitHub Pages 仅识别「仓库根 404.html」作为回退页，
+              # 子目录的 404.html 不会被使用。把 SPA 子游戏的 index.html(=dist/404.html)
+              # 复制到根，使 /<slug>/* 直接访问/刷新时回退到 App（否则报 404）。
+              # 非 SPA 游戏不生成 dist/404.html，不受影响。
+              if [ -f "$dir/dist/404.html" ]; then
+                cp "$dir/dist/404.html" "./404.html"
+              fi
               PUBLISHED+=("$slug")
               echo "::endgroup::"
             fi
@@ -72,7 +79,7 @@ jobs:
           #    循环由「无变化则退出、不推送」自然终止。
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add sitemap.xml
+          git add sitemap.xml 404.html
           for s in "${PUBLISHED[@]:-}"; do
             [ -n "$s" ] && git add "$s"
           done
