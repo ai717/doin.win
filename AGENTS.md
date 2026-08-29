@@ -13,10 +13,13 @@ doin.win 是小游戏合集站点的首页（门户），以卡片形式链接�
 ├── index.html      # 首页
 ├── css/style.css   # 全部样式（像素风主题，CSS 变量定义在 :root）
 ├── js/main.js      # 读 games.json 渲染卡片 + 注入 JSON-LD
-├── games.json      # 游戏清单（唯一数据源）
+├── games.json      # 游戏清单（唯一数据源；sitemap 由 scripts/gen-sitemap.mjs 据此生成）
 ├── assets/         # favicon.svg / og-image.png / 封面图
-├── robots.txt / sitemap.xml / CNAME
-└── <游戏目录>/      # 各游戏独立目录
+├── scripts/        # 站点级脚本（如 gen-sitemap.mjs）
+├── games/          # 各子游戏源码目录（构建后由 CI 注入 /<slug>/ 子路径）
+│   └── <slug>/     # e.g. sudoku/、ningluosi/，各自含 package.json + build 脚本，base 设 /<slug>/
+├── .github/workflows/deploy.yml  # 全站 CI 部署（主站静态 + 自动发现 games/* 并构建）
+└── robots.txt / sitemap.xml / CNAME
 ```
 
 ## games.json 条目字段
@@ -34,11 +37,11 @@ doin.win 是小游戏合集站点的首页（门户），以卡片形式链接�
 - 最小改动，优先 Patch
 
 ## SEO 规则
-- sitemap 只收录同域名 URL：子目录式游戏上线后追加到主站 `sitemap.xml`；子域名游戏由各自站点维护自己的 sitemap/robots
+- sitemap 只收录同域名 URL：由 `scripts/gen-sitemap.mjs` 从 `games.json` 自动生成（排除 `comingSoon`），无需手工追加；子域名游戏由各自站点维护自己的 sitemap/robots
 - 新增游戏卡片时，同步确认目标站点可被收录（标题/描述准确）
 
 ## 部署与仓库
-- 仓库：github.com/ai717/doin.win（main 分支 = GitHub Pages 源，根目录）
+- 仓库：github.com/ai717/doin.win（main 分支；Pages 发布源 = GitHub Actions，由 `.github/workflows/deploy.yml` 驱动全站部署）
 - 域名：doin.win 由 Cloudflare 管理 DNS；CNAME 文件绑定域名
 - 认证：gh CLI 账号为 ai717（与 Windows 缓存的 ai919 不同，推送靠 `gh auth setup-git`）
 - 已知问题：Cloudflare 橙云代理导致 GitHub 证书无法签发（526），需灰云直连

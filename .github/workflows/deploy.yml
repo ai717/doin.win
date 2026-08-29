@@ -1,0 +1,93 @@
+name: Deploy doin.win
+
+# 全站部署（门户 + 所有子游戏）。
+# 约定（未来加游戏只需满足即可，无需改此文件）：
+#   1. 子游戏源码放在 games/<slug>/，如 games/sudoku/、games/ningluosi/
+#   2. 该目录含 package.json 且带 build 脚本，产物输出到 dist/
+#   3. 构建配置里设 base: "/<slug>/"，使资源自带子路径前缀
+#   4. 在 games.json 加一条 { "slug": "<slug>", "url": "/<slug>/" }
+# CI 会自动发现 games/ 下所有游戏并构建，注入发布站的 /<slug>/ 子路径。
+# sitemap.xml 由 games.json 自动生成（见 scripts/gen-sitemap.mjs），无需手工维护。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # 0) 由 games.json（唯一数据源）生成 sitemap.xml，避免手工遗漏
+      - name: Generate sitemap from games.json
+        run: node scripts/gen-sitemap.mjs
+
+      # 1) 主站门户：纯静态，原样拷贝（sitemap.xml 已由上一步生成）
+      - name: Stage main site (static)
+        run: |
+          mkdir -p _site
+          cp index.html CNAME robots.txt sitemap.xml games.json _site/ 2>/dev/null || true
+          cp -r css js assets _site/ 2>/dev/null || true
+
+      # 2) 自动发现并构建 games/ 下的子游戏，挂载到 /<slug>/
+      - name: Build & mount sub-games (auto-discover)
+        run: |
+          set -e
+          FAILED=""
+          for path in games/*/; do
+            dir=$(basename "$path")
+            [ -f "games/$dir/package.json" ] || continue
+            if grep -q '"build"' "games/$dir/package.json"; then
+              echo "::group::Build game: $dir"
+              if ! (cd "games/$dir" && npm ci && npm run build); then
+                echo "::error::Game '$dir' build failed"
+                FAILED="$FAILED $dir"
+                echo "::endgroup::"
+                continue
+              fi
+              # SPA 回退：直接访问/刷新子路由(如 /sudoku/play)时 GitHub Pages 会 404，
+              # 复制 index.html 为 404.html 让客户端路由接管。
+              if [ -f "games/$dir/dist/index.html" ]; then
+                cp "games/$dir/dist/index.html" "games/$dir/dist/404.html"
+              fi
+              mkdir -p "_site/$dir"
+              cp -r "games/$dir/dist/." "_site/$dir/"
+              echo "::endgroup::"
+            fi
+          done
+          if [ -n "$FAILED" ]; then
+            echo "Failed games:$FAILED"
+            exit 1
+          fi
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

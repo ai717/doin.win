@@ -13,3 +13,6 @@ desktop.ini
 # 临时截图
 qa-*.png
 
+# WorkBuddy 项目数据（记忆/缓存，非源码）
+.workbuddy/
+
