@@ -1,0 +1,1 @@
+import{R as e}from"./store-BFShZ_P4.js";import{n as t,r as n}from"./site-chrome-DChoFRya.js";var r=e();function i({children:e}){return(0,r.jsxs)(t,{children:[(0,r.jsx)(n,{}),(0,r.jsx)(`main`,{className:`mx-auto w-full max-w-3xl flex-1 py-8`,children:e})]})}export{i as t};
