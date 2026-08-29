@@ -41,7 +41,8 @@ doin.win 是小游戏合集站点的首页（门户），以卡片形式链接�
 - 新增游戏卡片时，同步确认目标站点可被收录（标题/描述准确）
 
 ## 部署与仓库
-- 仓库：github.com/ai717/doin.win（main 分支；Pages 发布源 = GitHub Actions，由 `.github/workflows/deploy.yml` 驱动全站部署）
+- 仓库：github.com/ai717/doin.win（main 分支 = GitHub Pages 源，根目录；分支发布模式）
+- 子游戏部署：`.github/workflows/deploy.yml` 遍历 `games/*/` 自动构建，把静态产物回提进 `main/<slug>/` 子目录（如 `main/sudoku/`），由分支模式直接伺服。注：本站 Pages 绑定自定义域名，GitHub API 无法改发布源，故不能用 Actions 部署模式，沿用分支发布（见 PROJECT_LOG 2026-08-29 第三步）。
 - 域名：doin.win 由 Cloudflare 管理 DNS；CNAME 文件绑定域名
 - 认证：gh CLI 账号为 ai717（与 Windows 缓存的 ai919 不同，推送靠 `gh auth setup-git`）
 - 已知问题：Cloudflare 橙云代理导致 GitHub 证书无法签发（526），需灰云直连

@@ -122,3 +122,28 @@ GitHub Pages 伺服仓库根目录文件，`doin.win/sudoku/` = 仓库 `sudoku/i
 - 提交并推送全部改动（sudoku 改造 / games.json / games/ 目录 / deploy.yml / gen-sitemap.mjs / AGENTS.md）
 - 切 Pages 源到 Actions + 触发首次部署 + 验证
 
+## 2026-08-29 · 第三步：提交并部署（已完成 ✅）
+
+### 关键决策变更（重要）
+原规划「切 Pages 源到 GitHub Actions（build_type=workflow）」被证实不可行：
+- 本项目 Pages 绑定自定义域名 `doin.win`（Cloudflare 托管），**GitHub REST API 的 Pages PATCH 接口对该站点整体返回 404**（实测连 `custom_404` 字段都 404，但同令牌对仓库本身有写权限、GET pages 正常）。即自定义域名站点无法经 API 改源。
+- `actions/deploy-pages` 的 artifact 在 `build_type=legacy` 下被忽略（`ai717.github.io/doin.win/sudoku/` 实测 404）。
+- **改用分支发布模式（契合 AGENTS.md「main = Pages 源，根目录」约定）**：CI 构建子游戏后把静态产物**提交回 `main/<slug>/` 子目录**，由现有分支模式直接伺服。
+
+### 最终 deploy.yml 逻辑（已上线）
+- on: push main / workflow_dispatch；`permissions: contents: write`
+- Setup Node 22 → `node scripts/gen-sitemap.mjs` 生成 sitemap.xml
+- 遍历 `games/*/`：凡含 `package.json` 且有 `build` 脚本者 → `npm ci && npm run build` → `cp dist/index.html dist/404.html`（SPA 回退）→ 把 `dist/` 复制到仓库根 `<slug>/`
+- `git add` 变更 → commit → `git push origin HEAD:main`
+- **不加 `[skip ci]`**：legacy 模式的 Pages 重建由「推送到 main」触发，若跳过 CI 则子游戏不上线；循环靠「无变化则退出、不推送」自然终止（实测仅触发 2 次 run，均 success，无循环）
+
+### 部署验证（github.io 默认域）
+- `main` 已含 `sudoku/` 目录（10 文件，workflow 回提成功）
+- Pages 重建 run `33242064203` → success
+- `https://ai717.github.io/doin.win/sudoku/` → **HTTP 200**，标题「九宫 · 数独」，资源走 `/sudoku/assets/...` 子目录前缀
+- 门户 `https://ai717.github.io/doin.win/` → 200（未受影响）
+
+### 仍未解决
+- **`doin.win` 自定义域名 526**（Cloudflare 橙云挡证书签发）：github.io 域正常，但自定义域不可达。需手动在 Cloudflare 后台将 doin.win 的 A 记录改灰云（DNS only）指向 GitHub 4 IP → 等证书签发 → Enforce HTTPS。这是 Cloudflare 后台操作，非代码改动。
+- 子目录 SPA 深链（如 `doin.win/sudoku/play` 直接访问/刷新）仍可能 404，仅客户端跳转正常；如需完美支持，后续可在 `<slug>/` 放 404.html 或 Cloudflare 改写规则兜底（当前已 cp 了 404.html，但未做路径重写）。
+
